@@ -195,6 +195,21 @@
         .emoji-item { font-size: 28px; text-align: center; cursor: pointer; transition: 0.2s; padding:5px; border-radius:8px; background:rgba(0,0,0,0.03); border:1px solid var(--border-color);}
         .emoji-item:active { transform: scale(0.9); }
     </style>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "34499e89-153b-4691-9de6-1d4ad48a9120",
+    serviceWorkerPath: "OneSignalSDKWorker.js",
+    serviceWorkerParam: {
+      scope: "/gtesports.github.io/"
+    }
+  });
+});
+</script>
+
 </head>
 <body>
 
