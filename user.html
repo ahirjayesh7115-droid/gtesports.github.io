@@ -1044,7 +1044,77 @@ OneSignalDeferred.push(async function(OneSignal) {
             } catch(e) { showToast("Error: Please Logout and Login again to change password.", true); } 
         };
 
-        window.toggleNotifications = async () => { const tg = document.getElementById('notifToggle'); if(!tg) return; const isChecked = tg.checked; window.notifsEnabled = isChecked; try { await db.collection("users").doc(window.currentUser.uid).update({ notifOn: isChecked }); showToast(isChecked ? "Notifications ON" : "Notifications OFF"); } catch(e) {} };
+        
+window.toggleNotifications = async () => {
+    const tg = document.getElementById('notifToggle');
+    if (!tg) return;
+
+    const isChecked = tg.checked;
+    tg.disabled = true;
+
+    try {
+        await new Promise((resolve, reject) => {
+            if (!window.OneSignalDeferred) {
+                reject(new Error("OneSignal SDK not loaded"));
+                return;
+            }
+
+            window.OneSignalDeferred.push(async (OneSignal) => {
+                try {
+                    if (isChecked) {
+                        if (!OneSignal.Notifications.isPushSupported()) {
+                            throw new Error("Push not supported");
+                        }
+
+                        await OneSignal.User.PushSubscription.optIn();
+
+                        if (!OneSignal.Notifications.permission) {
+                            throw new Error("Permission not granted");
+                        }
+                    } else {
+                        await OneSignal.User.PushSubscription.optOut();
+                    }
+
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        });
+
+        window.notifsEnabled = isChecked;
+
+        try {
+            if (window.currentUser?.uid) {
+                await db.collection("users")
+                    .doc(window.currentUser.uid)
+                    .update({ notifOn: isChecked });
+            }
+        } catch (dbError) {
+            console.error("Database update error:", dbError);
+        }
+
+        showToast(
+            isChecked
+                ? "Notifications ON"
+                : "Notifications OFF"
+        );
+
+    } catch (error) {
+        console.error("OneSignal error:", error);
+        tg.checked = !isChecked;
+        window.notifsEnabled = !isChecked;
+
+        showToast(
+            isChecked
+                ? "Notification permission nahi mili"
+                : "Notification OFF nahi ho payi"
+        );
+    } finally {
+        tg.disabled = false;
+    }
+};
+
         window.openPolicyModal = (type) => { setTxt('policyTitle', type); let content = "Policy not configured by admin yet."; if(window.appSettings) { if(type === 'Privacy Policy' && window.appSettings.privacyPolicy) content = window.appSettings.privacyPolicy; if(type === 'Fair Play Policy' && window.appSettings.fairPlayPolicy) content = window.appSettings.fairPlayPolicy; } if(content.startsWith("http")) { setHtml('policyContent', `<a href="${content}" target="_blank" style="color:var(--info);">Click here to view ${type}</a>`); } else { setTxt('policyContent', content); } openModal('policyModal'); };
         
         window.openDeveloperContact = () => { showToast("Connecting to Developer..."); setTimeout(() => { window.open("https://wa.me/919773180340?text=" + encodeURIComponent("Hi, I need help with the app."), "_blank"); }, 800); };
