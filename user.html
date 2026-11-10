@@ -1065,7 +1065,7 @@ window.toggleNotifications = async () => {
                         if (!OneSignal.Notifications.isPushSupported()) {
                             throw new Error("Push not supported");
                         }
-
+                        await OneSignal.Notifications.requestPermission();
                         await OneSignal.User.PushSubscription.optIn();
 
                         if (!OneSignal.Notifications.permission) {
